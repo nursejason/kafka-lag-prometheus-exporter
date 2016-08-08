@@ -61,8 +61,7 @@ def _fetch_consumer_lag(client, topic, consumer_group):
             for p_id, res in current_offsets}
 
 class TopicGroupPair(object):
-    def __init__(self, name_str, group_str, gauge=None):
+    def __init__(self, name_str, group_str):
         self.name = name_str
         self.group = group_str
-        self.gauge = gauge
         self.lag = None

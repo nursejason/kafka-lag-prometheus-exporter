@@ -36,4 +36,4 @@ ADD /. /usr/local/kafka-ops/
 WORKDIR /usr/local/kafka-ops/
 
 # Set the default command to execute
-ENTRYPOINT ["python2.7", "api.py"]
+ENTRYPOINT ["python2.7", "main.py"]
