@@ -18,7 +18,7 @@ RUN pip install prometheus_client==0.0.13
 #####################
 #   Logging Setup   #
 #####################
-VOLUME /var/log/kafka-lag-exporter
+VOLUME /var/log/AAA
 
 ##################
 #   Misc Setup   #
