@@ -1,11 +1,12 @@
 ################################################################################
 # Based on CentOS                                                              #
 ################################################################################
-FROM centos:latest
+FROM docker.comcast.net/aaa/aaa_base:2.3
 
 ####################
 #    Image Setup   #
 ####################
+
 # Install retrying python lib
 RUN pip install retrying==1.3.3
 
