@@ -6,6 +6,9 @@ FROM centos:latest
 ####################
 #    Image Setup   #
 ####################
+# Install retrying python lib
+RUN pip install retrying==1.3.3
+
 # Install Python Kafka lib and dependencies
 RUN pip install pykafka==2.4.0
 

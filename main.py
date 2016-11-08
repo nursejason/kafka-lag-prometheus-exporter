@@ -3,7 +3,7 @@ import time
 
 import argparse
 from adapters import BaseMetricsAdapter, PrometheusAdapter
-from tools import generate_lag_all_topics, TopicGroupPair
+from tools import generate_lag_all_topics, generate_kafka_client, TopicGroupPair
 
 MONITOR_PORT = 7110
 
@@ -52,8 +52,9 @@ def main():
     topic_group_list = config_dict['topic_group_pairs']
     sleep_duration = 10
 
+    kafka_client = generate_kafka_client(config_dict['kafka_str'])
     while 1:
-        get_lag(config_dict['kafka_str'], topic_group_list)
+        get_lag(kafka_client, topic_group_list)
         metrics_adapter.update_metrics(topic_group_list)
 
         print 'Run complete, sleeping for %s seconds.' % sleep_duration
