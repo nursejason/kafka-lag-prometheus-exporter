@@ -4,15 +4,21 @@ import datetime as dt
 
 import pykafka
 
-def _create_client(kafka_str):
+from retrying import retry
+
+def generate_kafka_client(kafka_str):
     return pykafka.KafkaClient(hosts=kafka_str)
 
-def generate_lag_all_topics(kafka_str, topics_group_list):
+def retry_if_kafka_exception(exception):
+    return isinstance(exception, pykafka.KafkaException)
+
+@retry(retry_on_exception=retry_if_kafka_exception, wait_fixed=2000,
+       stop_max_attempt_number=5)
+def generate_lag_all_topics(client, topics_group_list):
     """ Call helper function by establishing a client and kafka objects """
-    client = _create_client(kafka_str)
     for topic_group in topics_group_list:
         kafka_topic = client.topics[topic_group.name]
-        lag_dict = _fetch_consumer_lag(client, kafka_topic, topic_group.group)
+        lag_dict = _fetch_consumer_lag(kafka_topic, topic_group.group)
         lag = 0
         for _, offset_tuple in lag_dict.iteritems():
             published_offset, consumed_offset = offset_tuple
@@ -20,10 +26,8 @@ def generate_lag_all_topics(kafka_str, topics_group_list):
 
         topic_group.lag = lag
 
-def _fetch_offsets(client, topic, offset):
+def _fetch_offsets(topic, offset):
     """Fetch raw offset data from a topic.
-    :param client: KafkaClient connected to the cluster.
-    :type client:  :class:`pykafka.KafkaClient`
     :param topic:  Name of the topic.
     :type topic:  :class:`pykafka.topic.Topic`
     :param offset: Offset to reset to. Can be earliest, latest or a datetime.
@@ -43,17 +47,15 @@ def _fetch_offsets(client, topic, offset):
         return topic.fetch_offset_limits(offset)
 
 
-def _fetch_consumer_lag(client, topic, consumer_group):
+def _fetch_consumer_lag(topic, consumer_group):
     """Get raw lag data for a topic/consumer group.
-    :param client: KafkaClient connected to the cluster.
-    :type client:  :class:`pykafka.KafkaClient`
     :param topic:  Name of the topic.
     :type topic:  :class:`pykafka.topic.Topic`
     :param consumer_group: Name of the consumer group to fetch lag for.
     :type consumer_groups: :class:`str`
     :returns: dict of {partition_id: (latest_offset, consumer_offset)}
     """
-    latest_offsets = _fetch_offsets(client, topic, 'latest')
+    latest_offsets = _fetch_offsets(topic, 'latest')
     consumer = topic.get_simple_consumer(consumer_group=consumer_group,
                                          auto_start=False)
     current_offsets = consumer.fetch_offsets()
