@@ -10,21 +10,27 @@ def generate_kafka_client(kafka_str):
     return pykafka.KafkaClient(hosts=kafka_str)
 
 def retry_if_kafka_exception(exception):
-    return isinstance(exception, pykafka.KafkaException)
+    return isinstance(exception, pykafka.exceptions.KafkaException)
 
 @retry(retry_on_exception=retry_if_kafka_exception, wait_fixed=2000,
        stop_max_attempt_number=5)
-def generate_lag_all_topics(client, topics_group_list):
+def generate_lag_all_topics(client, kafka_str, topics_group_list):
     """ Call helper function by establishing a client and kafka objects """
-    for topic_group in topics_group_list:
-        kafka_topic = client.topics[topic_group.name]
-        lag_dict = _fetch_consumer_lag(kafka_topic, topic_group.group)
-        lag = 0
-        for _, offset_tuple in lag_dict.iteritems():
-            published_offset, consumed_offset = offset_tuple
-            lag += published_offset - consumed_offset
+    try:
+        for topic_group in topics_group_list:
+            kafka_topic = client.topics[topic_group.name]
+            lag_dict = _fetch_consumer_lag(kafka_topic, topic_group.group)
+            lag = 0
+            for _, offset_tuple in lag_dict.iteritems():
+                published_offset, consumed_offset = offset_tuple
+                lag += published_offset - consumed_offset
 
-        topic_group.lag = lag
+            topic_group.lag = lag
+    except pykafka.exceptions.KafkaException as kafka_exception:
+        print 'Warning: Kafka Exception raised. %s' % kafka_exception
+        client = generate_kafka_client(kafka_str)
+        print 'Re-Created Kafka Client'
+        raise
 
 def _fetch_offsets(topic, offset):
     """Fetch raw offset data from a topic.
