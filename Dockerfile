@@ -11,7 +11,7 @@ FROM docker.comcast.net/aaa/aaa_base:2.3
 RUN pip install retrying==1.3.3
 
 # Install Python Kafka lib and dependencies
-RUN pip install pykafka==2.4.0
+RUN pip install pykafka==2.5.0
 
 # Install Prometheus lib
 RUN pip install prometheus_client==0.0.13
